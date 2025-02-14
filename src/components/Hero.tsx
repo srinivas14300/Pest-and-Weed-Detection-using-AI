@@ -1,4 +1,5 @@
 import { ArrowRight, Leaf, LeafyGreen, Scan, Sprout } from "lucide-react";
+import React from "react";
 const Hero = () => {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 overflow-hidden">

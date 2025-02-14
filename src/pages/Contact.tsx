@@ -5,6 +5,19 @@ import React from 'react';
 
 export default function Contact() {
   const { theme } = useTheme();
+  const [mapUrl, setMapUrl] = React.useState('https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d317715.7119163247!2d-0.3817840219724494!3d51.52873519756609!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2sus!4v1712345678901');
+
+  React.useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        const newMapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15000!2d${longitude}!3d${latitude}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1sen!2sin!4v1`;
+        setMapUrl(newMapUrl);
+      }, (error) => {
+        console.error("Error getting location:", error);
+      });
+    }
+  }, []);
 
   return (
     <div className={`min-h-screen pt-24 ${theme.background} transition-colors duration-300`}>
@@ -65,8 +78,8 @@ export default function Contact() {
                 <div className="flex items-start gap-4">
                   <MapPinIcon className="w-6 h-6 mt-1 text-green-600" />
                   <div>
-                    <p className={`${theme.text} font-medium`}>Our Farm</p>
-                    <p className={`${theme.text} opacity-80`}>123 Agricultural Road<br/>Farmington, CA 12345</p>
+                    <p className={`${theme.text} font-medium`}>IARE</p>
+                    <p className={`${theme.text} opacity-80`}>Dundigal<br/>Telangana, India</p>
                   </div>
                 </div>
 
@@ -74,7 +87,7 @@ export default function Contact() {
                   <EnvelopeIcon className="w-6 h-6 mt-1 text-green-600" />
                   <div>
                     <p className={`${theme.text} font-medium`}>Email Us</p>
-                    <p className={`${theme.text} opacity-80`}>support@cwdai.farm</p>
+                    <p className={`${theme.text} opacity-80`}>cwdai.farm@gmail.com</p>
                   </div>
                 </div>
 
@@ -82,7 +95,7 @@ export default function Contact() {
                   <PhoneIcon className="w-6 h-6 mt-1 text-green-600" />
                   <div>
                     <p className={`${theme.text} font-medium`}>Call Us</p>
-                    <p className={`${theme.text} opacity-80`}>+1 (555) 123-4567</p>
+                    <p className={`${theme.text} opacity-80`}>+91 0401000101</p>
                   </div>
                 </div>
               </div>
@@ -98,9 +111,13 @@ export default function Contact() {
             {/* Map Embed */}
             <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d317715.7119163247!2d-0.3817840219724494!3d51.52873519756609!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47d8a00baf21de75%3A0x52963a5addd52a99!2sLondon%2C%20UK!5e0!3m2!1sen!2sus!4v1712345678901"
-                className="w-full h-full"
+                src={mapUrl}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
                 loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
           </div>

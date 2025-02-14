@@ -1,138 +1,114 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Scan, Loader2, Bug, Sprout, Shield } from 'lucide-react';
-import React, { useRef } from 'react';
-import Webcam from 'react-webcam';
+import React from 'react';
 
-export default function TryItNow() {
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+interface MockAnalysisResult {
+  cropType: string;
+  weedType: string;
+  healthStatus: 'healthy' | 'stressed' | 'diseased';
+  severity: number;
+  treatmentOptions: string[];
+}
+
+const TryItNow = () => {
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [result, setResult] = useState<MockAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const webcamRef = useRef<Webcam>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'image/*': ['.jpg', '.jpeg', '.png'] },
-    multiple: false,
-    onDrop: files => files[0] && handleImageUpload(files[0])
-  });
+  const wsToken = typeof __WS_TOKEN__ !== 'undefined' ? __WS_TOKEN__ : 'placeholder_token';
 
-  const handleImageUpload = async (uploadedFile: File) => {
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('image', uploadedFile);
-
-      const response = await fetch('http://localhost:5000/detect', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) throw new Error('Server error');
-
-      const analysisResult = await response.json();
-
-      setFile(uploadedFile);
-      setResult(analysisResult);
-    } catch (error) {
-      console.error('Analysis failed:', error);
-      alert('Image processing failed!');
-    } finally {
-      setLoading(false);
-    }
+  const handleImageUpload = (uploadedFile: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => setImageSrc(e.target?.result as string);
+    reader.readAsDataURL(uploadedFile);
   };
 
-  const captureImage = async () => {
-    if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
-      if (imageSrc) {
-        fetch(imageSrc)
-          .then((res) => res.blob())
-          .then((blob) => {
-            const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
-            handleImageUpload(file);
-          });
-      }
-    }
+  const analyzeImage = async () => {
+    if (!imageRef.current) return;
+
+    setLoading(true);
+    // Simulate static analysis results
+    const mockResult: MockAnalysisResult = {
+      cropType: 'Corn',
+      weedType: 'Crabgrass',
+      healthStatus: 'healthy',
+      severity: 1,
+      treatmentOptions: ['Watering', 'Fertilizing'],
+    };
+    // Simulate a delay for loading
+    setTimeout(() => {
+      setResult(mockResult);
+      setLoading(false);
+    }, 2000); // Simulating a 2-second delay for analysis
   };
 
   return (
-    <div className="min-h-screen bg-green-50 py-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-green-800 mb-8 text-center">
-          AI Crop Analysis
-        </h1>
-
-        {/* Upload Zone */}
-        <div 
-          {...getRootProps()}
-          className={`border-4 border-dashed rounded-2xl p-8 mb-12 text-center cursor-pointer transition-colors
-            ${isDragActive ? 'border-green-600 bg-green-100' : 'border-green-400 hover:border-green-500'}`}
-        >
-          <input {...getInputProps()} />
-          <Scan className="h-16 w-16 text-green-600 mx-auto mb-4" />
-          <p className="text-xl text-green-800">
-            {isDragActive ? 'Drop image here' : 'Drag & drop crop image or click to select'}
-          </p>
-          <p className="text-sm text-green-600 mt-2">Supported formats: JPG, PNG</p>
+    <div className="p-8 max-w-7xl mx-auto">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-3xl font-bold text-green-800 mb-6">AI Crop & Weed Analysis</h2>
+        
+        {/* Image Upload Section */}
+        <div className="mb-8">
+          <input 
+            type="file" 
+            accept="image/*"
+            onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+            className="mb-4"
+          />
+          
+          {imageSrc && (
+            <div className="relative">
+              <img 
+                ref={imageRef}
+                src={imageSrc} 
+                alt="Uploaded crop"
+                className="max-h-96 object-contain mx-auto rounded-lg border-2 border-green-200"
+              />
+              
+              <button 
+                onClick={analyzeImage}
+                disabled={loading}
+                className="mt-4 bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-green-300 transition-colors"
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin mr-2">🌀</span>
+                    Analyzing...
+                  </span>
+                ) : 'Analyze Image'}
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Webcam Capture */}
-        <div className="text-center mb-12">
-          <Webcam ref={webcamRef} screenshotFormat="image/jpeg" className="rounded-lg shadow-md" />
-          <button onClick={captureImage} className="mt-4 bg-blue-500 text-white p-2 rounded">
-            Capture Image
-          </button>
-        </div>
-
-        {/* Analysis Results */}
-        {file && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            {loading ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-12 w-12 text-green-600 animate-spin mx-auto mb-4" />
-                <p className="text-green-800 text-lg">Analyzing your crop image...</p>
+        {/* Results Section */}
+        {result && (
+          <div className="bg-green-50 p-6 rounded-lg">
+            <h3 className="text-xl font-bold text-green-800 mb-4">Detection Results</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center bg-white p-3 rounded">
+                <span>Crop Type:</span>
+                <span className="font-semibold text-green-700">{result.cropType}</span>
               </div>
-            ) : result && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 mb-6">
-                  {result.type === 'pest' && <Bug className="h-8 w-8 text-red-600" />}
-                  {result.type === 'weed' && <Shield className="h-8 w-8 text-yellow-600" />}
-                  {result.type === 'healthy' && <Sprout className="h-8 w-8 text-green-600" />}
-                  <h2 className="text-2xl font-semibold text-gray-800 capitalize">
-                    {result.type} Detected ({result.confidence}% confidence)
-                  </h2>
-                </div>
-
-                <div className="bg-green-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-green-800 mb-4">
-                    AI Recommendations
-                  </h3>
-                  <ul className="space-y-3">
-                    {result.recommendations.map((rec, index) => (
-                      <li key={index} className="flex items-start gap-3 text-green-700">
-                        <span className="text-green-600">•</span>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <img 
-                  src={URL.createObjectURL(file)} 
-                  alt="Analyzed crop" 
-                  className="rounded-lg shadow-md mt-6"
-                />
+              <div className="flex justify-between items-center bg-white p-3 rounded">
+                <span>Weed Type:</span>
+                <span className="font-semibold text-green-700">{result.weedType}</span>
               </div>
-            )}
+              <div className="flex justify-between items-center bg-white p-3 rounded">
+                <span>Health Status:</span>
+                <span className="font-semibold text-green-700">{result.healthStatus}</span>
+              </div>
+              <div className="flex justify-between items-center bg-white p-3 rounded">
+                <span>Treatment Options:</span>
+                <span className="font-semibold text-green-700">{result.treatmentOptions.join(', ')}</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
-}
+};
 
-interface AnalysisResult {
-  type: 'pest' | 'weed' | 'healthy';
-  confidence: number;
-  recommendations: string[];
-}
+export default TryItNow;

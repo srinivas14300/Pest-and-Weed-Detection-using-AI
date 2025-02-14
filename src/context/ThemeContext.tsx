@@ -53,7 +53,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    document.documentElement.className = themes[themeIndex].background;
+    const container = document.getElementById('theme-container');
+    if (container) {
+      container.className = themes[themeIndex].background;
+    }
     localStorage.setItem('theme', themes[themeIndex].name);
   }, [themeIndex]);
 
